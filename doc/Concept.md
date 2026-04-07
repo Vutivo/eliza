@@ -1,44 +1,67 @@
-Faire un chatbot qui réponde aux demandes de l'utilisateur,
-demande qui a un rapport avec le voyage,
-le bot suggere des choix en fonction des réponses de la personne
-le bot pose des questions pour cibler plus précisement les besoins de son interlocuteur
+# Concept du chatbot
 
-le bot va :
-- se présenter et souhaiter la bienvenue
-- demander si c'est un voyage professionnel(1), personnel(2) ou un renseignement(3)
-1.ville de départ
-1.ville d'arrivée
-2.Choix de destination (campagne ou ville)
-2. Le bot propose des idées de villes en fonction des choix de destination
-1.date de départ
-1.date de retour
-1.transport pour y aller(voiture d'entreprise, perso, train... )
-1.logement
-1.transport pour se déplacer à l'endroit prévu
-1.demande si il veux faire des activités
-    OUI:
-        - type d'activité (restau, art, sport... )
+L'objectif de ce bot est de pouvoir répondre au question des utilisateur sur n'importe quel moment dans la journée dans le theme du voyage. Le chatbot va donc pouvoir intéragir avec ce dernier, lui faire des suggestions en fonction de ces réponses ainsi que lui poser des questions pour cibler plus précisement les besoins de son interlocuteur
 
-3.quel renseignement (activité, temps, logement... )
+## Fonctionnement
+Pour ce qui est du fonctionnement, le bot fonctionnera différement en fonction des demandes de la personne. Il y a une fonction si :
+
+- La personne à besoin de **renseignement**
+- La personne veut effectuer un voyage **professionnel**
+- La personne veut effectuer un voyage **personnel**
+
+Le bot fonctionne sur l'application **Discord**, il a également une mémoire **locale** qui lui permettra, de garder en cache uniquement les informations données par la personne dans un chat.En cas de changement de chat, les données ne seront pas transférés sur le nouveau.
+
+Lors de la connexion sur le serveur discord, l'utilisateur à la possibilité de se rendre dans une catégorie pour pouvoir créée un chat avec le bot et lui même pour rendre la conversation plus privée.
+
+Une fois le chat créée, le bot va commencé par se présenter (son rôle, son objectif,...) puis va poser une seul question qui orientra la suite de la conversation.Après chaque message, le bot vous posera une question supplémentaire afin de l'aider dans la recherche d'idée en fonction de vos envies.
+
+### renseignement :
+Si l'objectif de la personne en face est uniquement d'avoir des renseignements pour par exemple uniquement des activités, sur le temps ou sur un logement, alors, une simple discussion aura lieu entre l'utilisateur et l'IA pour répondre simplement à la question de l'utilisateur.
+
+### professionnel :
+Si l'objectif de la personne en face est d'organiser un voyage professionnel, alors le bot va lui poser des questions en rapport à :
+
+- La ville de départ
+- La ville d'arrivée
+- La date de départ
+- La date de retour
+- Moyen de transport pour arriver à destination
+- Moyen de transport pour se déplacer durant le séjour
+- Le logement
+- Des activité, Si oui :
+    - proposition d'activité (restaurant, musée, sport, ...)
+
+### personnel :
+Si l'objectif de la personne est de réaliser un voyage personnel, alors le bot va également lui poser des question en rapport à :
+
+- La ville de départ
+- La ville d'arrivée Si pas d'idée:
+    - Choix de la destination (ville ou campagne)
+    - Proposition d'idées de destination en fonction des choix, des envies de la personne
+
+- La date de départ
+- La date de retour
+- Moyen de transport pour arriver à destination
+- Moyen de transport pour se déplacer durant le séjour
+- Le logement
+- Proposition ou suggestion d'activité à faire durant le séjour
+
+## Récapitulatif 
+A la fin de la conversation avec vous et le bot ou lorsque vous souhaitez exécuté la commande  ```/recap```, vous avez la possibilité de voir un récapitulatif de votre conversation avec l'IA qui ressemble à ceci :
 
 
-Dans sa réponse pour un voyage(1 ou 2):(embbed)
-    type de voyage (pro/perso)
-    ville de départ
-    ville d'arrivée
-    date de départ
-    date de retour
-    transport pour y aller(voiture d'entreprise, perso, train... )
-    logement
-    transport pour se déplacer à l'endroit prévu
-    activités si il y a
-    Temps
-    Temperature moyenne
+```- type de voyage 
+- ville de départ
+- ville d'arrivée
+- date de départ
+- date de retour
+- transport pour y aller(voiture d'entreprise, perso, train... )
+- logement
+- transport pour se déplacer à l'endroit prévu
+- activités si il y a
+- Temps
+- Temperature moyenne
+```
+    
 
-Toujours finir par une question
 
-
-BONUS:
-- Téléchargement en PDF
-- Budget
-- Nombre de personne 
