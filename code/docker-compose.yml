@@ -2,7 +2,7 @@ services:
   web-frontend:
     build: ./landing
     ports:
-      - "8000:8000"
+      - "8000:5173"
     volumes:
       - ./landing:/app
 
