@@ -1,6 +1,7 @@
 import Tags from "./componants/Tags"
 import  Button  from "./componants/Button"
 import Problem from "./componants/Problem"
+import Soluce from "./componants/Soluce"
 
 // Assets
 import image_network from "./assets/network.png"
@@ -10,6 +11,10 @@ import image_support from "./assets/support.png"
 import image_research_travel from "./assets/research_travel.jpg"
 import image_unexpected from "./assets/unexpected.jpg"
 import image_lang from "./assets/lang.png"
+
+import image_efficiency from "./assets/efficiency.jpg"
+import image_confort from "./assets/confort.png"
+import image_multilang from "./assets/translate.jpg"
 
 
 const problems = [
@@ -62,7 +67,7 @@ function App() {
       </div>
       {/* Problematique */}
       <div>
-        <h1 className="font-bold text-4xl text-center mt-16 mb-32">
+        <h1 className="font-bold text-4xl text-center mt-32 mb-32">
   Organiser un voyage peut être complexe et chronophage. Notre solution vise à simplifier ce processus.
         </h1>
 
@@ -77,6 +82,18 @@ function App() {
             />
           ))}
         </div>
+    </div>
+    {/* Solution */}
+    <div>
+      <h1 className="font-bold text-4xl text-center mt-32 mb-32 p-4">
+        Imagine un assistant de voyage intelligent qui comprend tes besoins et te guide pour chaque étape de ton aventure.
+      </h1>
+      <div className="flex flex-row gap-4 justify-center items-start">
+        <Soluce title="Efficacité" text="Notre solution optimise le processus d'organisation de vos voyages, vous faisant gagner du temps et de l'énergie." image={image_efficiency} />
+        <Soluce title="Confort" text="Notre assistant intelligent s’adapte à vos imprévus et prend soin de chaque détail." image={image_confort} />
+        <Soluce title="Multi-langage" text="Notre IA consulte les sites locaux pour vous, garantissant une expérience sans barrières linguistiques." image={image_multilang} />
+      </div>
+      
     </div>
       
 
