@@ -165,6 +165,15 @@ function App() {
           />
         ))}
       </div>
+
+      {/* Rejoindre le serveur Discord */}
+      <div className="bg-blue-100 w-full h-[30vh] flex flex-col items-center justify-center mt-32 gap-4">
+        <h1 className="font-bold text-3xl text-center">
+          Rejoignez notre communauté sur Discord et commencez à planifier votre prochain voyage dès aujourd’hui !
+        </h1>
+        <Button title="Rejoindre le serveur Discord" transparent={false} onClick={() => {}} />
+      
+      </div>
       
     </div>
     {/* Prix */}
@@ -197,14 +206,7 @@ function App() {
 
       </div>
     </div>
-    {/* Rejoindre le serveur Discord */}
-      <div className="bg-blue-100 w-full h-[30vh] flex flex-col items-center justify-center mt-32 gap-4">
-        <h1 className="font-bold text-3xl text-center">
-          Rejoignez notre communauté sur Discord et commencez à planifier votre prochain voyage dès aujourd’hui !
-        </h1>
-        <Button title="Rejoindre le serveur Discord" transparent={false} onClick={() => {}} />
-      
-      </div>
+    
 
     </div>
 
