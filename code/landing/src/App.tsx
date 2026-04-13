@@ -3,6 +3,7 @@ import  Button  from "./componants/Button"
 import Problem from "./componants/Problem"
 import Soluce from "./componants/Soluce"
 import Use from "./componants/Use"
+import Price from "./componants/Price"
 
 // Assets
 import image_network from "./assets/network.png"
@@ -49,7 +50,7 @@ const useCases = [
   },
   {
     number: 2,
-    title: "Création de votre sallon privé",
+    title: "Création de votre salon privé",
     text: "Créez votre salon privé pour discuter de vos besoins de voyage avec notre assistant intelligent, disponible 24h/24, 7j/7.",
   },
   {
@@ -58,7 +59,41 @@ const useCases = [
     text: "Discutez avec notre chatbot pour obtenir des recommandations personnalisées, finaliser les détails de votre voyage et profiter d’une expérience de planification sans stress.",
   },
 ];
+const prices = [
+  {
+    title: "Plan de base",
+    price: "Gratuit",
+    args: [
+      { text: "Accès au chatbot de base", highlight: false },
+      { text: "Nombre de tokens limité", highlight: false },
+      { text: "Support communautaire", highlight: false },
+      { text: "Mistral 7B Instruct", highlight: false },
+    ],
+  },
+   {
+    title: "Plan Premium Mensuel",
+    price: "9,99€/mois",
+    args: [
+      { text: "Accès au chatbot de base avec des fonctionnalités supplémentaires", highlight: true },
+      { text: "Recommandations personnalisées illimitées", highlight: true },
+      { text: "Nombre de tokens augmenté pour des recherches plus efficaces", highlight: true },
+      { text: "Support prioritaire et assistance personnalisée", highlight: true },
+      { text: "Mistral 7B Instruct" },
+    ],
+  },
+];
+const tokens_prices = [
+  {
+    title: "tokens augmentés",
+    price: "1€ pour 100 tokens",
+    args: [
+      { text: "Achetez des tokens supplémentaires pour des recherches plus approfondies et des recommandations plus précises.", highlight: false },
+      { text: "Idéal pour les utilisateurs qui souhaitent une expérience de planification de voyage plus complète.", highlight: false },
+    ],
+  },
 
+  
+];
 function App() {
   return (
     <div>
@@ -132,7 +167,44 @@ function App() {
       </div>
       
     </div>
+    {/* Prix */}
+    <div>
+      <h1 className="font-bold text-4xl text-center mt-32 mb-8 p-4">
+        Prix
+      </h1>
+      <p className="text-center text-xl">Pour que vos recherche soit plus efficace, découvrez nos offres adaptées à vos besoins.</p>
+      <div className="flex flex-row gap-4 justify-center items-start mt-16">
+        {prices.map((price, index) => (
+          <Price
+            key={index}
+            title={price.title}
+            price={price.price}
+            args={price.args}
+          />
+        ))}
       
+
+      </div>
+      <div className="flex flex-row gap-4 justify-center items-start mt-16">
+        {tokens_prices.map((price, index) => (
+          <Price
+            key={index}
+            title={price.title}
+            price={price.price}
+            args={price.args}
+          />
+        ))}
+
+      </div>
+    </div>
+    {/* Rejoindre le serveur Discord */}
+      <div className="bg-blue-100 w-full h-[30vh] flex flex-col items-center justify-center mt-32 gap-4">
+        <h1 className="font-bold text-3xl text-center">
+          Rejoignez notre communauté sur Discord et commencez à planifier votre prochain voyage dès aujourd’hui !
+        </h1>
+        <Button title="Rejoindre le serveur Discord" transparent={false} onClick={() => {}} />
+      
+      </div>
 
     </div>
 
