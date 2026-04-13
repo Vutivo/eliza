@@ -31,74 +31,7 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 print("lancement du bot")
 
-class LLM_LLaMa_Local:
-    def __init__(self, model):
-        self.model = model
-        self.contexts = {}
 
-    def get_llm_response(self, user_message, channel_id):
-        if channel_id not in self.contexts: # to store for new channel
-
-            prompt = [{
-                "role":"system",
-                "content": (
-                    "Tu es un assistant avec des outils. "
-                    "Si on te demande le temps qu'il fait, repond SEULEMENT en JSON : "
-                    '{"tools":"weather", "city":"Nantes", "days":1}.'
-                    "Sinon répond normalement et demande si l'utilisateur a besoin de quelque chose."
-                )
-            }]
-            self.contexts[channel_id] = prompt
-
-        self.contexts[channel_id].append({ # clean storage of user message
-            "role" : "user",
-            "content" : user_message
-        })
-
-        mistral = self.model.create_chat_completion( # add response for next interaction
-            messages=self.contexts[channel_id],
-            max_tokens=120
-        )
-
-        response = mistral["choices"][0]["message"]["content"]
-
-        try:
-            data = json.loads(response)
-            if "tools" in data:
-                if data["tools"]=="weather":
-                    city = data["city"]
-                    days = data["days"] # ??? days = data.get("days", 0)
-
-                    results_weather = WeatherPerDate(city, days)
-
-                reform = self.model.create_chat_completion(
-                    {
-                    "role": "system",
-                    "content": "Transforme les données en phrase"
-                    },
-                    {
-                    "role": "user",
-                    "content": str(weather)
-                    }
-                )
-                final_response = mistral["choices"][0]["message"]["content"]
-                self.contexts[channel_id].append({
-                    "role" : "assistant",
-                    "content" : response
-                })
-                return final_response
-        except:
-            pass
-        
-        self.contexts[channel_id].append({
-            "role": "assistant",
-            "content": response
-        })
-
-        if len(self.contexts[channel_id]) > 20: # store only 20 last messages
-            self.contexts[channel_id] = self.contexts[prompt] + self.contexts[channel_id][-20:]
-
-        return response
 
 class CreateTextRoomView(discord.ui.View):
     def __init__(self):
@@ -185,29 +118,124 @@ class CancelDeleteView(discord.ui.View):
         )
         await interaction.message.delete()
 
-class WeatherPerDate(discord.ui.View):
-    async def weather(self, interaction: discord.Interaction, city: str, days: int=0):
+class LLM_LLaMa_Local:
+    def __init__(self, model):
+        self.model = model
+        self.contexts = {}
+        self.system_prompt = [{
+            "role": "system",
+            "content": "Tu es un assistant serviable. Réponds TOUJOURS en français, peu importe la langue de l'utilisateur."
+        }]
+
+    def context(self, channel_id):  # limit to make sure the llm will run faster
+        if len(self.contexts[channel_id]) > 20:
+            self.contexts[channel_id] = list(self.system_prompt) + self.contexts[channel_id][-20:]
+
+    def classify(self, message: str):
+        """Asking to LLM to classify the user writing to call functions"""
+        result = self.model.create_chat_completion(
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a classifier. Output ONLY raw JSON. No text, no explanation.\n"
+                        '{"output":"weather","city":"CITY","days":N} or {"output":"other"}'
+                    )
+                },
+                # Examples
+                {"role": "user", "content": "météo à Paris ?"},
+                {"role": "assistant", "content": '{"output":"weather","city":"Paris","days":0}'},
+                {"role": "user", "content": "température à Lyon demain"},
+                {"role": "assistant", "content": '{"output":"weather","city":"Lyon","days":1}'},
+                {"role": "user", "content": "il fait chaud à Nantes dans 2 jours ?"},
+                {"role": "assistant", "content": '{"output":"weather","city":"Nantes","days":2}'},
+                {"role": "user", "content": "raconte moi une blague"},
+                {"role": "assistant", "content": '{"output":"other"}'},
+                {"role": "user", "content": "c'est quoi la capitale de l'Espagne ?"},
+                {"role": "assistant", "content": '{"output":"other"}'},
+                # Real message we asking for:
+                {"role": "user", "content": message}
+            ],
+            max_tokens=50 # limit to have shot JSON
+        )
+        response = result["choices"][0]["message"]["content"].strip()
+        print("JSON Format:", response)
+        try:
+            return json.loads(response)
+        except:
+            return {"output": "other"}
+
+
+    def get_llm_response(self, user_message, channel_id):
+        if channel_id not in self.contexts:
+            self.contexts[channel_id] = list(self.system_prompt)
+
+        self.contexts[channel_id].append({"role": "user", "content": user_message})
+
+        # looking for "weather" in the content or not
+        output = self.classify(user_message)
+
+        # if weather asked by user :
+        if output.get("output") == "weather":
+            city = output.get("city")
+            days = int(output.get("days", 0))
+            print(f"[WEATHER] city={city}, days={days}")
+
+            results_weather = weather(city, days)
+
+            reform = self.model.create_chat_completion(messages=[
+                {"role": "system", "content": "Tu es un assistant météo. Réponds UNIQUEMENT en français en une seule phrase courte."},
+                # Example
+                {"role": "user", "content": "A Paris: 22°C"},
+                {"role": "assistant", "content": "Il fait actuellement 22°C à Paris."},
+                {"role": "user", "content": "A Bordeaux: Minimum température : 8, Maximum température : 15"},
+                {"role": "assistant", "content": "À Bordeaux, les températures seront comprises entre 8°C et 15°C."},
+                # Real message we asking for :
+                {"role": "user", "content": str(results_weather)}
+            ])
+            final_response = reform["choices"][0]["message"]["content"]
+            self.contexts[channel_id].append({"role": "assistant", "content": final_response})
+            self.context(channel_id)
+            return final_response
+
+        # No weather asked by user
+        result = self.model.create_chat_completion(
+            messages=self.contexts[channel_id],
+            max_tokens=300
+        )
+        response = result["choices"][0]["message"]["content"]
+        self.contexts[channel_id].append({"role": "assistant", "content": response})
+        self.context(channel_id)
+
+        return response
+        
+def weather(city, days=0):
     
-        if days == 0:
-            url = f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
-            
-            res = requests.get(url)
-            data = res.json()
-            temp_c = data['current']['temp_c']
-            return (f"A {city}: {temp_c}°C")
+    if days == 0:
+        url = f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
+        
+        res = requests.get(url)
+        data = res.json()
+        if "error" in data:
+            return "Aucune ville avec ce nom n'a été trouvé"
+        
+        temp_c = data['current']['temp_c']
+        print(temp_c)
+        return (f"A {city}: {temp_c}°C")
+    else:
+        url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days={days}&aqi=no&alerts=no"
+        
+        res = requests.get(url)
+        data = res.json()
+
+        if "error" in data:
+            return "Aucune ville avec ce nom n'a été trouvé"
         else:
-            url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days={days}&aqi=no&alerts=no"
-            
-            res = requests.get(url)
-            data = res.json()
-
-            if "error" in data:
-                return "Aucune ville avec ce nom n'a été trouvé"
-            else:
-                forecast_day_min_temp = data['forecast']['forecastday'][0]['day']['mintemp_c']
-                forecast_day_max_temp = data['forecast']['forecastday'][0]['day']['maxtemp_c']
-
-                return(f"A {city}: Minimum température : {forecast_day_min_temp}, Maximum température : {forecast_day_max_temp}")
+            forecast_day_min_temp = data['forecast']['forecastday'][0]['day']['mintemp_c']
+            forecast_day_max_temp = data['forecast']['forecastday'][0]['day']['maxtemp_c']
+            print(forecast_day_min_temp)
+            print(forecast_day_max_temp)
+            return(f"A {city}: Température minimale prévue: {forecast_day_min_temp}, Température maximale prévue: {forecast_day_max_temp}")
 
 @client.event
 async def on_ready():
@@ -240,14 +268,12 @@ async def on_message(message):
 
     if message.channel.name == f"salon-{message.author.id}":
 
-        response = used_llm.get_llm_response(
-            message.content,
-            message.channel.id
-        )
-
+        async with message.channel.typing():
+            response = await asyncio.to_thread(
+                used_llm.get_llm_response,
+                message.content,
+                message.channel.id
+            )
         await message.channel.send(response)
 
 client.run(DISCORD_TOKEN)
-
-
-# prendre les mots clés dans le prompt de l'utilisateur pour les utiliser en fonction
