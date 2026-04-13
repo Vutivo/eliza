@@ -6,7 +6,7 @@ export function Use({number, title, text}: {
   return (
     <div className=" flex flex-col w-[30%] h-[30vh] border border-black rounded-md ">
       <div className="flex flex-row ">
-        <div className="flex items-center justify-center w-12 h-12 border-2 border-black mt-4 ml-4 rounded-md text-xl font-bold text-white bg-blue-500">
+        <div className="flex items-center justify-center w-12 h-12 mt-4 ml-4 rounded-md text-xl font-bold text-white bg-blue-500">
         {number}
         </div>
         <h2 className="text-xl font-semibold mt-6 ml-16">{title}</h2>

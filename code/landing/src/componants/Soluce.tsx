@@ -9,7 +9,7 @@ image: string;
                 <img  className="w-12 h-12 " src={image} alt="Illustration" />
                 <h1 className="font-bold text-3xl m-2 ">{title}</h1>
             </div>
-            <p className=" whitespace-pre-line text-2xl leading-loose  ">{text}</p>
+            <p className="text-gray-700 whitespace-pre-line text-xl leading-loose  ">{text}</p>
             
 
         </div>
