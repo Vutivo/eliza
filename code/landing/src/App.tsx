@@ -87,7 +87,7 @@ const tokens_prices = [
     title: "tokens augmentés",
     price: "1€ pour 100 tokens",
     args: [
-      { text: "Achetez des tokens supplémentaires pour des recherches plus approfondies et des recommandations plus précises.", highlight: false },
+      { text: "Achetez des tokens supplémentaires pour des recherches plus approfondies.", highlight: false },
       { text: "Idéal pour les utilisateurs qui souhaitent une expérience de planification de voyage plus complète.", highlight: false },
     ],
   },
@@ -206,6 +206,15 @@ function App() {
 
       </div>
     </div>
+
+    {/* Footer */}
+    <footer>
+      <div className="bg-blue-100 w-full h-[20vh] flex items-center justify-center mt-32">
+        <p className=" text-center">
+          &copy; 2026 ChatTPG. Tous droits réservés.
+        </p>
+      </div>
+    </footer>
     
 
     </div>
