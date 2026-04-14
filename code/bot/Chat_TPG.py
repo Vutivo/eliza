@@ -1,3 +1,4 @@
+
 import discord
 import os
 import asyncio # allow making timers
@@ -31,7 +32,74 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 print("lancement du bot")
 
+class LLM_LLaMa_Local:
+    def __init__(self, model):
+        self.model = model
+        self.contexts = {}
 
+    def get_llm_response(self, user_message, channel_id):
+        if channel_id not in self.contexts: # to store for new channel
+
+            prompt = [{
+                "role":"system",
+                "content": (
+                    "Tu es un assistant avec des outils. "
+                    "Si on te demande le temps qu'il fait, repond SEULEMENT en JSON : "
+                    '{"tools":"weather", "city":"Nantes", "days":1}.'
+                    "Sinon répond normalement et demande si l'utilisateur a besoin de quelque chose."
+                )
+            }]
+            self.contexts[channel_id] = prompt
+
+        self.contexts[channel_id].append({ # clean storage of user message
+            "role" : "user",
+            "content" : user_message
+        })
+
+        mistral = self.model.create_chat_completion( # add response for next interaction
+            messages=self.contexts[channel_id],
+            max_tokens=120
+        )
+
+        response = mistral["choices"][0]["message"]["content"]
+
+        try:
+            data = json.loads(response)
+            if "tools" in data:
+                if data["tools"]=="weather":
+                    city = data["city"]
+                    days = data["days"] # ??? days = data.get("days", 0)
+
+                    results_weather = WeatherPerDate(city, days)
+
+                reform = self.model.create_chat_completion(
+                    {
+                    "role": "system",
+                    "content": "Transforme les données en phrase"
+                    },
+                    {
+                    "role": "user",
+                    "content": str(weather)
+                    }
+                )
+                final_response = mistral["choices"][0]["message"]["content"]
+                self.contexts[channel_id].append({
+                    "role" : "assistant",
+                    "content" : response
+                })
+                return final_response
+        except:
+            pass
+        
+        self.contexts[channel_id].append({
+            "role": "assistant",
+            "content": response
+        })
+
+        if len(self.contexts[channel_id]) > 20: # store only 20 last messages
+            self.contexts[channel_id] = self.contexts[prompt] + self.contexts[channel_id][-20:]
+
+        return response
 
 class CreateTextRoomView(discord.ui.View):
     def __init__(self):
@@ -237,6 +305,26 @@ def weather(city, days=0):
             print(forecast_day_max_temp)
             return(f"A {city}: Température minimale prévue: {forecast_day_min_temp}, Température maximale prévue: {forecast_day_max_temp}")
 
+
+class Houssing(discord.ui.View):
+
+    @discord.ui.button(label="Appartement", style=discord.ButtonStyle.primary)
+    async def appartement(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(
+            "Voici les appartements que j'ai trouvé pour vous !"
+        )
+
+    @discord.ui.button(label="Maison", style=discord.ButtonStyle.success)
+    async def maison(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(
+            "Voici les maisons disponibles !"
+        )
+
+    @discord.ui.button(label="Je ne sais pas", style=discord.ButtonStyle.secondary)
+    async def inconnu(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(
+            "Pas de souci, je vais t'aider à choisir 😉"
+        )
 @client.event
 async def on_ready():
     print(f'Connecté : {client.user}')
@@ -268,12 +356,11 @@ async def on_message(message):
 
     if message.channel.name == f"salon-{message.author.id}":
 
-        async with message.channel.typing():
-            response = await asyncio.to_thread(
-                used_llm.get_llm_response,
-                message.content,
-                message.channel.id
-            )
+        response = used_llm.get_llm_response(
+            message.content,
+            message.channel.id
+        )
+
         await message.channel.send(response)
 
 client.run(DISCORD_TOKEN)
