@@ -1,3 +1,4 @@
+
 import discord
 import os
 import asyncio # allow making timers
@@ -52,6 +53,10 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 print("lancement du bot")
 
+class LLM_LLaMa_Local:
+    def __init__(self, model):
+        self.model = model
+        self.contexts = {}
 
 @client.event
 async def on_ready():
@@ -84,12 +89,11 @@ async def on_message(message):
 
     if message.channel.name == f"salon-{message.author.id}":
 
-        async with message.channel.typing():
-            response = await asyncio.to_thread(
-                used_llm.get_llm_response,
-                message.content,
-                message.channel.id
-            )
+        response = used_llm.get_llm_response(
+            message.content,
+            message.channel.id
+        )
+
         await message.channel.send(response)
 
 client.run(DISCORD_TOKEN)
