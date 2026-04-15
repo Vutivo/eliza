@@ -4,8 +4,9 @@ from Weather import weather
 from state import channel_data
 
 class LLM_LLaMa_Local:
-    def __init__(self, model):
+    def __init__(self, model,serp_api_key):
         self.model = model
+        self.SerpAPI = serp_api_key
         self.contexts = {}
         self.system_prompt = [{
             "role": "system",
@@ -29,28 +30,17 @@ class LLM_LLaMa_Local:
                     )
                 },
 
-               
-                {"role": "user", "content": "je cherche un logement"},
-                {"role": "assistant", "content": '{"output":"logement"}'},
-
-                {"role": "user", "content": "je cherche un hôtel"},
-                {"role": "assistant", "content": '{"output":"logement"}'},
-
-                {"role": "user", "content": "trouve moi un hôtel à Paris"},
-                {"role": "assistant", "content": '{"output":"logement","city":"Paris"}'},
-
-                {"role": "user", "content": "hôtel à Lyon"},
-                {"role": "assistant", "content": '{"output":"logement","city":"Lyon"}'},
-
-                {"role": "user", "content": "je veux dormir quelque part à Bordeaux"},
-                {"role": "assistant", "content": '{"output":"logement","city":"Bordeaux"}'},
-
-                {"role": "user", "content": "où dormir à Marseille"},
-                {"role": "assistant", "content": '{"output":"logement","city":"Marseille"}'},
-
-                {"role": "user", "content": "je veux un hôtel pas cher à Lille"},
-                {"role": "assistant", "content": '{"output":"logement","city":"Lille"}'},
-
+               # Examples for Houssing
+                {"role": "user", "content": "hôtel à Paris"},
+                {"role": "assistant", "content": "{\"output\":\"logement\",\"city\":\"Paris\"}"},
+                {"role": "user", "content": "hôtel pas cher à Lille"},
+                {"role": "assistant", "content": "{\"output\":\"logement\",\"city\":\"Lille\",\"price_max\":80}"},
+                {"role": "user", "content": "moins de 100€ à Lyon"},
+                {"role": "assistant", "content": "{\"output\":\"logement\",\"city\":\"Lyon\",\"price_max\":100}"},
+                {"role": "user", "content": "entre 80 et 150€ à Nice"},
+                {"role": "assistant", "content": "{\"output\":\"logement\",\"city\":\"Nice\",\"price_min\":80,\"price_max\":150}"},
+                {"role": "user", "content": "je veux un hôtel à Marseille"},
+                {"role": "assistant", "content": "{\"output\":\"logement\",\"city\":\"Marseille\"}"},
                 {"role": "user", "content": message}
             ],
             max_tokens=50
@@ -90,31 +80,88 @@ class LLM_LLaMa_Local:
             return final_response
 
         if output.get("output") == "logement":
-            data = channel_data.setdefault(channel_id, {
-                "city": None
-            })
 
+            data = channel_data.setdefault(channel_id, {})
+
+            data.setdefault("city", None)
+            data.setdefault("price_min", None)
+            data.setdefault("price_max", None)
+
+            user_text = user_message.lower()
+
+        
+            no_budget = any(x in user_text for x in [
+                "pas de budget",
+                "sans budget",
+                "aucun budget",
+                "je n'ai pas de budget",
+                "peu importe"
+            ])
+
+        
             if output.get("city"):
+                if data["city"] and data["city"] != output["city"]:
+                    data["price_min"] = None
+                    data["price_max"] = None
+
                 data["city"] = output["city"]
 
-            # Cas 1 : il manque la ville
+            if output.get("price_min") is not None:
+                data["price_min"] = output["price_min"]
+
+            if output.get("price_max") is not None:
+                data["price_max"] = output["price_max"]
+
             if not data["city"]:
                 return {
                     "tool": "logement",
-                    "message": "Dans quelle ville cherchez-vous un hôtel ?"
+                    "message": "Dans quelle ville cherchez-vous un logement ?"
                 }
 
-            # Cas 2 : ville connue → recherche
+        
+            if not no_budget:
+                if data["price_min"] is None and data["price_max"] is None:
+                    return {
+                        "tool": "logement",
+                        "message": "Vous avez un budget minimum ou maximum ?"
+                    }
+
+            if no_budget:
+                data["price_min"] = None
+                data["price_max"] = None
+
+
             city = data["city"]
-            results = Houssing(city, "hotel").search()
+            price_min = data["price_min"]
+            price_max = data["price_max"]
 
-            msg = f"Voici des hôtels à {city}\n\n"
-            msg += "\n\n".join([f"**{r['titre']}** — {r['prix']}\n{r['url']}" for r in results])
+            results = Houssing(city, "hotel", self.SerpAPI, price_min, price_max).search()
+            if not results:
+                return {
+                    "tool": "logement_done",
+                    "message": f"Aucun logement trouvé à {city} avec les critères spécifiés."
+                }
 
-            # Reset
-            data["city"] = None
+            msg = f"Voici des logements à {city}"
+
+            if price_min is not None or price_max is not None:
+                msg += " ("
+                if price_min is not None:
+                    msg += f"min {price_min}€"
+                if price_min is not None and price_max is not None:
+                    msg += " - "
+                if price_max is not None:
+                    msg += f"max {price_max}€"
+                msg += ")"
+
+            msg += "\n\n"
+
+            msg += "\n\n".join([
+                f"**{r['titre']}** — {r['prix']}€\n{r['url']}"
+                for r in results
+            ])
 
             return {
                 "tool": "logement_done",
-                "message": msg
+                "message": msg 
             }
