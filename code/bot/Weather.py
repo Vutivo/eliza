@@ -1,5 +1,7 @@
 import requests
 import os
+from dotenv import load_dotenv
+
 
 """
 Function weather to get informations from API
@@ -16,6 +18,7 @@ The response is given in French even if it's an error.
 """
 
 
+load_dotenv()
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 
 
@@ -26,20 +29,20 @@ def weather(city, days=0):
         
         res = requests.get(url)
         if res.status_code != 200:
-            return "Erreur Weather API"
+            return "Erreur API Météo"
         data = res.json()
         if "error" in data:
             return "Aucune ville avec ce nom n'a été trouvé"
         
         temp_c = data['current']['temp_c']
-        # print(temp_c)
+        print(temp_c)
         return (f"A {city}: {temp_c}°C")
     else:
         url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days={days}&aqi=no&alerts=no"
         
         res = requests.get(url)
         if res.status_code != 200:
-            return "Erreur Weather API"
+            return "Erreur API Météo"
         data = res.json()
 
         if "error" in data:
