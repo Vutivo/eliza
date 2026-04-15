@@ -53,7 +53,7 @@ async def on_ready():
         view=CreateTextRoomView()
     )
 
-used_llm = LLM_LLaMa_Local(llm)
+used_llm = LLM_LLaMa_Local(llm, SerpAPI)
 
 @client.event
 async def on_message(message):
