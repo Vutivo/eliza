@@ -1,75 +1,47 @@
-
 import discord
 import os
-import asyncio # allow making timers
+import asyncio
 
 from llama_cpp import Llama
 from dotenv import load_dotenv
-# From our files
+
 from Discord_room import DeleteTextRoom, CreateTextRoomView
 from LLM_asking import LLM_LLaMa_Local
-
-"""
-Discord Bot with Local LLM (Mistral 7B)
-
-This script initializes and runs a Discord bot with a local LLM.
-The bot allows users to create private text channels and interact with
-an AI travel assistant inside these private channels.
-
-Features:
-- Private channel creation when clicking a button
-- Delete channel when clicking a delete button in the private channel
-- Cancel channel deletion when clicking a cancel button in the private channel
-- All buttons are persistent to ensure they still work when the bot restarts
-- Local LLM from HuggingFace
-- Asynchronous processing for smooth LLM responses
-
-Example:
-1. User clicks the creation button -> private room created
-2. User sends a message -> LLM generates a response -> replies in the same channel
-3. User clicks the deletion button -> cancel button appears
-4.1. User does not click -> room is deleted
-4.2. User clicks the cancel button -> room stays open
-"""
+from state import channel_data
 
 load_dotenv()
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 DISCORD_CHANNEL = int(os.getenv("DISCORD_CHANNEL", 0))
 HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
+SerpAPI = os.getenv("SerpAPI")
 
-
-os.environ["HF_HUB_TOKEN"] = HUGGING_FACE_TOKEN # Necessary to validate token by hugging face
+os.environ["HF_HUB_TOKEN"] = HUGGING_FACE_TOKEN
 
 llm = Llama.from_pretrained(
-	repo_id="LiteLLMs/Mistral-7B-Instruct-v0.3-GGUF",
-	filename="Q5_1/Q5_1-00001-of-00001.gguf",
-    verbose=False # desactivate messages from terminal
+    repo_id="LiteLLMs/Mistral-7B-Instruct-v0.3-GGUF",
+    filename="Q5_1/Q5_1-00001-of-00001.gguf",
+    verbose=False
 )
 
-intents = discord.Intents.all() # all permissions
+intents = discord.Intents.all()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
 print("lancement du bot")
 
-class LLM_LLaMa_Local:
-    def __init__(self, model):
-        self.model = model
-        self.contexts = {}
-
 @client.event
 async def on_ready():
     print(f'Connecté : {client.user}')
 
-    client.add_view(DeleteTextRoom())  # Make persistant button
+    client.add_view(DeleteTextRoom())
     client.add_view(CreateTextRoomView())
 
     try:
-        channel = await client.fetch_channel(DISCORD_CHANNEL)  # try to catch channel
+        channel = await client.fetch_channel(DISCORD_CHANNEL)
     except Exception as e:
         print(f"Erreur: {e}")
-
+        return
 
     async for msg in channel.history(limit=50):
         if msg.author == client.user and msg.components:
@@ -80,7 +52,7 @@ async def on_ready():
         view=CreateTextRoomView()
     )
 
-used_llm = LLM_LLaMa_Local(llm) # use pretrained llm here
+used_llm = LLM_LLaMa_Local(llm)
 
 @client.event
 async def on_message(message):
@@ -89,11 +61,31 @@ async def on_message(message):
 
     if message.channel.name == f"salon-{message.author.id}":
 
-        response = used_llm.get_llm_response(
+        if message.channel.id not in channel_data:
+            channel_data[message.channel.id] = {
+                "type": None,
+                "city": None
+            }
+
+        response = await asyncio.to_thread(
+            used_llm.get_llm_response,
             message.content,
             message.channel.id
-        )
+        )  
 
-        await message.channel.send(response)
+        if isinstance(response, dict):
+            msg = response.get("message", "")
+            view = response.get("view")
+
+            if not msg or not msg.strip():
+                msg = "Je n'ai pas compris 🤔"
+
+            await message.channel.send(msg, view=view)
+
+        else:
+            if not response or not response.strip():
+                response = "Je n'ai pas compris 🤔"
+
+            await message.channel.send(response)
 
 client.run(DISCORD_TOKEN)
