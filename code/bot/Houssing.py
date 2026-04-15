@@ -1,23 +1,42 @@
-import discord
+import requests
+from datetime import datetime, timedelta
+from Chat_TPG import SerpAPI
 
-class Houssing(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
 
-    @discord.ui.button(label="Appartement", style=discord.ButtonStyle.primary)
-    async def appartement(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "Voici les appartements que j'ai trouvé pour vous !"
+class Houssing:
+    def __init__(self, city, logement_type):
+        self.city = city
+        self.logement_type = logement_type
+        self.api_token = SerpAPI
+
+    def search(self):
+    
+        today = datetime.today().strftime("%Y-%m-%d")
+        tomorrow = (datetime.today() + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        response = requests.get(
+            "https://serpapi.com/search",
+            params={
+                "engine": "google_hotels",
+                "q": self.city,
+                "check_in_date": today,
+                "check_out_date": tomorrow,
+                "api_key": self.api_token,
+                "currency": "EUR",
+                "hl": "fr",
+                "gl": "fr"
+            }
         )
 
-    @discord.ui.button(label="Maison", style=discord.ButtonStyle.success)
-    async def maison(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "Voici les maisons disponibles !"
-        )
+        data = response.json()
+        print(data.keys()) 
 
-    @discord.ui.button(label="Je ne sais pas", style=discord.ButtonStyle.secondary)
-    async def inconnu(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "Pas de souci, je vais t'aider à choisir 😉"
-        )
+        results = []
+        for item in data.get("properties", [])[:3]:
+            results.append({
+                "titre": item.get("name", "Hôtel"),
+                "prix": item.get("rate_per_night", {}).get("lowest", "?"),
+                "url": item.get("link", "")
+            })
+
+        return results
