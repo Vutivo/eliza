@@ -73,6 +73,7 @@ WEATHER_API_KEY=
 DISCORD_CHANNEL=
 HUGGING_FACE_TOKEN=
 SerpAPI=
+SNCF_API_KEY=
 ```
 **Description des variables**
 
@@ -85,6 +86,8 @@ SerpAPI=
 **HUGGING_FACE_TOKEN** : token pour télécharger ou utiliser des modèles Hugging Face
 
 **SerpAPI** : clé API pour les recherches web
+
+**SNCF_API_KEY** : clé api pour des recherches sur un trajet en train
 
 ## Crédits
 This project was made by [ssamepi](https://github.com/ssamepi), and [Kenan-LCF](https://github.com/Kenan-LCF).
