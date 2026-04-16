@@ -129,5 +129,32 @@ async def recap(interaction: discord.Interaction):
         await interaction.response.send_message(embeds=embeds)
     else:
         await interaction.response.send_message("Aucune recherche connue.", delete_after=3)
-        
+
+
+@client.tree.command(name="aide", description="Affiche les demandes et commandes possible de votre assistant")
+async def aide(interaction: discord.Interaction):
+
+    member = interaction.user
+
+    if interaction.channel.name != f"salon-{member.id}":
+        await interaction.response.send_message("Cette commande est uniquement disponible dans votre salon privé.\nVeuillez crée un salon privé pour utiliser cette commande", delete_after=5)
+        return
+
+    await interaction.response.send_message(embed=CreateTextRoomView.build_embed())
+
+@client.tree.command(name="stop", description="Affiche les demandes et commandes possible de votre assistant")
+async def stop(interaction: discord.Interaction):
+
+    member = interaction.user
+
+    if interaction.channel.name != f"salon-{member.id}":
+        await interaction.response.send_message("Cette commande est uniquement disponible dans votre salon privé.\nVeuillez crée un salon privé pour utiliser cette commande", delete_after=5)
+        return
+
+    channel = interaction.channel
+
+    await interaction.response.defer() # escape from discord timer
+    await interaction.delete_original_response() # delete the original message
+    await channel.send(view=DeleteTextRoom())
+
 client.run(DISCORD_TOKEN)

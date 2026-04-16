@@ -21,6 +21,7 @@ Components:
 - Creates a new private room
 - Sends a confirmation message in the interaction response
 - Sends a message with a link to the private room if the room already exists
+- List all possible demands and all possible commands
 - Creates a button to close the room in the private room
 
 2. DeleteTextRoom
@@ -40,6 +41,21 @@ Components:
 class CreateTextRoomView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None) # make the button permanent
+
+    def build_embed():
+        embed = discord.Embed(title="Fonctionnalités disponibles :", color=3447003)
+
+        embed.add_field(name="Discussion", value="Parle-lui normalement, il te répondra.")
+        embed.add_field(name="Logement", value="Demande un logement en précisant la ville et un budget (min, max, ou les deux).\n*Ex : « hôtel à Lyon pour 80€ max »*", inline=False)
+        embed.add_field(name="Température actuelle", value="Demande la température dans n'importe quelle ville.\n*Ex : « météo à Paris »*")
+        embed.add_field(name="Prévisions météo", value="Demande une prévision jusqu'à 4 jours dans le futur.\n*Ex : « météo à Bordeaux dans 3 jours »*", inline=False)
+        embed.add_field(name="Trains — aujourd'hui", value="Demande les horaires de train à partir de maintenant en précisant la ville de départ et d'arrivée.\n*Ex : « trains Paris Lyon »*")
+        embed.add_field(name="Trains — jours suivants", value="Demande les horaires pour un autre jour, avec une heure de départ en option.\n*Ex : « trains Nantes Rennes demain à 9h »*", inline=False)
+        embed.add_field(name="/recap", value="Affiche un récapitulatif de tes dernières recherches (météo, logement, trains).")
+        embed.add_field(name="/aide", value="Affiche cette fiche à tout moment.")
+        embed.add_field(name="/stop", value="Affiche le bouton de fermeture de votre salon privé")
+
+        return embed
 
     @discord.ui.button(label="Créer mon salon privé", custom_id="create_channel")
     async def create_text_room(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -73,7 +89,7 @@ class CreateTextRoomView(discord.ui.View):
         )
 
         await channel.send(
-            "Clique pour clore la discution",
+            embed=CreateTextRoomView.build_embed(),
             view=DeleteTextRoom()
         )
 
@@ -107,7 +123,7 @@ class CancelDeleteView(discord.ui.View):
 
     async def _delete_after_delay(self):
     
-        await asyncio.sleep(2)
+        await asyncio.sleep(10)
         try:
             await self.channel_to_delete.delete()
         except:
