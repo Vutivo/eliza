@@ -52,4 +52,4 @@ def weather(city, days=0):
             forecast_day_max_temp = data['forecast']['forecastday'][0]['day']['maxtemp_c']
             # print(forecast_day_min_temp)
             # print(forecast_day_max_temp)
-            return(f"A {city}: Température minimale prévue: {forecast_day_min_temp}, Température maximale prévue: {forecast_day_max_temp}")
+            return(f"A {city}: Température minimale prévue: {forecast_day_min_temp}, Température maximale prévue: {forecast_day_max_temp}, Dans : {days}")

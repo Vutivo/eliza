@@ -107,10 +107,9 @@ class CancelDeleteView(discord.ui.View):
 
     async def _delete_after_delay(self):
     
-        await asyncio.sleep(10)
+        await asyncio.sleep(2)
         try:
             await self.channel_to_delete.delete()
-            ########################################################################## Suppression des données utilisateur ICI
         except:
             print("Problème au niveau de la suppression")
             pass

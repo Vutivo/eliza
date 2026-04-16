@@ -102,5 +102,5 @@ def search_trains(from_city, to_city, days=0, hour=None):
 
 # # Tests
 # print(search_trains("Nantes", "Vannes"))                      # today
-# print(search_trains("Nantes", "Vannes", days=1))              # tomorrow, at 8
+# print(search_trains("Nantes", "Paris", days=2))              # tomorrow, at 8
 # print(search_trains("Nantes", "Vannes", days=1, hour=10))     # tomorrow, at 10

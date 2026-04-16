@@ -1,14 +1,17 @@
 import requests
+import os
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
 
+load_dotenv()
 
 class Houssing:
-    def __init__(self, city, logement_type, api_token, price_min=None, price_max=None):
+    def __init__(self, city, logement_type, price_min=None, price_max=None):
         self.city = city
         self.logement_type = logement_type
         self.price_min = price_min
         self.price_max = price_max
-        self.api_token = api_token
+        self.api_token = os.getenv("SerpAPI")
 
     def search(self):
     

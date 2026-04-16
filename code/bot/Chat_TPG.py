@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 # From our files
 from Discord_room import DeleteTextRoom, CreateTextRoomView
 from LLM_asking import LLM_LLaMa_Local
-from Transport_by import search_trains
-from state import channel_data
+from discord.ext import commands
 
 """
 Discord Bot with Local LLM (Mistral 7B)
@@ -38,7 +37,6 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 DISCORD_CHANNEL = int(os.getenv("DISCORD_CHANNEL", 0))
 HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
-SerpAPI = os.getenv("SerpAPI")
 
 os.environ["HF_HUB_TOKEN"] = HUGGING_FACE_TOKEN # Necessary to validate token by hugging face
 
@@ -51,13 +49,15 @@ llm = Llama.from_pretrained(
 intents = discord.Intents.all() # all permissions
 intents.message_content = True
 
-client = discord.Client(intents=intents)
+client = commands.Bot(command_prefix="!", intents=intents)
 print("lancement du bot")
 
 
 @client.event
 async def on_ready():
     print(f'Connecté : {client.user}')
+
+    await client.tree.sync()
 
     client.add_view(DeleteTextRoom())  # Make persistant button
     client.add_view(CreateTextRoomView())
@@ -77,7 +77,7 @@ async def on_ready():
         view=CreateTextRoomView()
     )
 
-used_llm = LLM_LLaMa_Local(llm, SerpAPI) # use pretrained llm here
+used_llm = LLM_LLaMa_Local(llm) # use pretrained llm here
 
 @client.event
 async def on_message(message):
@@ -92,6 +92,42 @@ async def on_message(message):
                 message.content,
                 message.channel.id
             )
-        await message.channel.send(response)
+        await message.channel.send(response["text"])
 
+@client.tree.command(name="recap", description="Récapitulatif des dernières recherches")
+async def recap(interaction: discord.Interaction):
+    channel_id = interaction.channel_id
+    all_last = used_llm.last_result.get(channel_id, {})
+
+    if not all_last:
+        await interaction.response.send_message("Aucune recherche effectuée.", delete_after=3)
+        return
+
+    embeds = []
+
+    if "weather" in all_last:
+        last = all_last["weather"]
+        embed = discord.Embed(title=f"🌤️ Météo — {last['city']}", description=last.get("text"), color=0x5bc0eb)
+        embeds.append(embed)
+
+    if "train" in all_last:
+        last = all_last["train"]
+        embed = discord.Embed(title=f"🚆 Trains — {last['from']} → {last['to']}", description=last.get("text"), color=0x2ecc71)
+        embeds.append(embed)
+
+    if "logement" in all_last:
+        last = all_last["logement"]
+        embed = discord.Embed(title=f"🏨 Hôtels — {last['city']}", color=0xe67e22)
+        for h in last.get("hotels", []):
+            embed.add_field(name=f"{h['titre']} — {h['prix']}€", value=h['url'], inline=False)
+        embeds.append(embed)
+
+    for embed in embeds:
+        embed.set_footer(text="Assistant voyage")
+
+    if embeds:
+        await interaction.response.send_message(embeds=embeds)
+    else:
+        await interaction.response.send_message("Aucune recherche connue.", delete_after=3)
+        
 client.run(DISCORD_TOKEN)
