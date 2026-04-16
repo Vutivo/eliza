@@ -23,6 +23,9 @@ Features:
 - All buttons are persistent to ensure they still work when the bot restarts
 - Local LLM from HuggingFace
 - Asynchronous processing for smooth LLM responses
+- "/recap" command to display an ambed to list all answers listed in the previous talking with Chat TPG
+- "/stop" command to display a button to close the private room
+- "/aide" command to display an embed to list all possible demands and commands
 
 Example:
 1. User clicks the creation button -> private room created
