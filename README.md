@@ -56,7 +56,7 @@ code/
     ├── Concept.md
     ├── Ethique.md
 
-## Instalation
+## Installation
 Pour l'instalation du projet il suffit simplement de suivre ces étapes :
 
 Clone le répertoire sur github
