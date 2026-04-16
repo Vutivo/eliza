@@ -18,6 +18,9 @@ import image_efficiency from "./assets/efficiency.jpg"
 import image_confort from "./assets/confort.png"
 import image_multilang from "./assets/translate.jpg"
 
+import image_discord_startcb from "./assets/discord_startcb.png"
+import image_discord_wchatbot from "./assets/discord_wchatbot.png"
+import image_discord_chatbot from "./assets/discord_chatbot.png"
 
 const problems = [
   {
@@ -115,8 +118,8 @@ function App() {
           <Tags image={image_support} title="Assistance personnalisée" />
           </div>
           <div className="flex items-center justify-center gap-8 mt-16">
-          <Button title="Essayer gratuitement" transparent={false} onClick={() => {}} />
-          <Button title="Voir une Démo" transparent={true} onClick={() => {}} />
+          <Button title="Essayer gratuitement" transparent={false} onClick={() => {window.open('https://discord.gg/66xMYYcjvd', '_blank')}} />
+          <Button title="Voir une Démo" transparent={true} onClick={() => {document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })}} />
           </div>
       </div>
       {/* Problematique */}
@@ -171,7 +174,7 @@ function App() {
         <h1 className="font-bold text-3xl text-center">
           Rejoignez notre communauté sur Discord et commencez à planifier votre prochain voyage dès aujourd’hui !
         </h1>
-        <Button title="Rejoindre le serveur Discord" transparent={false} onClick={() => {}} />
+        <Button title="Rejoindre le serveur Discord" transparent={false} onClick={() => {window.open('https://discord.gg/66xMYYcjvd', '_blank')}} />
       
       </div>
       
@@ -206,10 +209,22 @@ function App() {
 
       </div>
     </div>
+    {/* Demonstration */}
+<div className="relative w-full overflow-hidden min-h-screen">
+  <h1 className="font-bold text-4xl text-center mt-32 mb-32 p-4">
+    Quelques images de notre chatbot en action pour vous donner un aperçu de son efficacité.
+  </h1>
+
+  <div id="demo" className="flex flex-row gap-4 justify-center items-start">
+    <img src={image_discord_startcb} alt="Chatbot Start" className="w-[30%] rounded-lg shadow-lg" />
+    <img src={image_discord_wchatbot} alt="Chatbot Interaction" className="w-[30%] rounded-lg shadow-lg" />
+    <img src={image_discord_chatbot} alt="Chatbot Response" className="w-[30%] rounded-lg shadow-lg" />
+  </div>
+</div>
 
     {/* Footer */}
     <footer>
-      <div className="bg-blue-100 w-full h-[20vh] flex items-center justify-center mt-32">
+      <div className="bg-blue-100 w-full h-[20vh] flex items-center justify-center mt-16">
         <p className=" text-center">
           &copy; 2026 ChatTPG. Tous droits réservés.
         </p>
