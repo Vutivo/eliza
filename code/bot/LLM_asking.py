@@ -8,6 +8,22 @@ channel_data = {}
 
 class LLM_LLaMa_Local:
     def __init__(self, model):
+        """Initialize the LLM_LLaMa_Local instance.
+
+        This constructor sets up the local language model along with
+    internal state used to manage conversation context and results.
+
+    Args:
+        model: The language model instance used to generate responses.
+               It must support a chat completion interface.
+
+    Attributes:
+        model: The underlying LLM used for inference.
+        contexts (dict): Stores conversation contexts (e.g., per user/session).
+        last_result (dict): Keeps track of the last generated result.
+        system_prompt (list): Default system instruction enforcing assistant behavior.
+
+        """
         self.model = model
         self.contexts = {}
         self.last_result = {}
@@ -27,6 +43,64 @@ class LLM_LLaMa_Local:
         self.contexts[channel_id] = list(self.system_prompt) + messages
 
     def classify(self, message: str):
+        """
+        Classify a user message into a structured JSON intent using an LLM.
+
+    This method sends the input message to a language model with strict
+    instructions to return a valid JSON object representing the detected intent.
+
+    The model can classify messages into the following categories:
+        - "weather": Weather-related queries
+        - "train": Train travel queries
+        - "logement": Accommodation/hotel searches
+        - "other": Any unrelated or unsupported request
+
+    Args:
+        message (str): The user input message to classify.
+
+    Returns:
+        dict: A parsed JSON dictionary with a fixed structure depending on the intent.
+
+        Possible outputs:
+            Weather:
+                {
+                    "output": "weather",
+                    "city": str,
+                    "days": int,
+                    "hour": int | null
+                }
+
+            Train:
+                {
+                    "output": "train",
+                    "from": str,
+                    "to": str,
+                    "days": int,
+                    "hour": int
+                }
+
+            Logement:
+                {
+                    "output": "logement",
+                    "city": str,
+                    "price_min": int | null,
+                    "price_max": int | null
+                }
+
+            Other:
+                {
+                    "output": "other"
+                }
+
+    Error Handling:
+        - If parsing fails or the model returns invalid JSON,
+          the method falls back to: {"output": "other"}.
+
+    Notes:
+        - Temperature is set to 0 for deterministic results.
+        - max_tokens is limited to prevent excessive output.
+        - The model is expected to strictly follow the JSON schema.
+        """
         result = self.model.create_chat_completion(
             messages=[{
                 "role": "system",
@@ -76,6 +150,18 @@ class LLM_LLaMa_Local:
             return {"output": "other"}
 
     def add_message(self, channel_id, role, message):
+        """
+            Append a message to the conversation context of a given channel.
+
+        Args:            
+            channel_id: Identifier for the conversation/channel.
+            role: The role of the message sender ("user" or "assistant").
+            message: The content of the message to add.   
+
+        Note:
+        - Assumes that self.contexts[channel_id] already exists.    
+        
+        """
         self.contexts[channel_id].append({
             "role": role,
             "content": message
@@ -83,6 +169,32 @@ class LLM_LLaMa_Local:
         self.context(channel_id)
 
     def get_llm_response(self, user_message, channel_id):
+        """
+        Process a user message, classify its intent, and generate an appropriate response.
+        This method manages the conversation flow by first classifying the user's intent and then performing actions based on that intent 
+        (e.g., fetching weather, train, or housing information). It also updates the conversation context and stores results for potential future reference.
+        
+        Args:
+            user_message (str): The raw message input from the user.
+            channel_id: An identifier for the conversation/channel to manage context.
+
+        Returns:
+            dict: A structured response containing the type of intent and relevant information.
+                Possible keys include:
+                    - "type": One of "weather", "train", "logement", or "other".
+                    - Additional keys depend on the type, such as "city", "hotels", "text", etc.
+        
+        Error Handling:
+            - If intent classification fails or an unsupported intent is detected, the method defaults to generating a generic response with type "other".
+
+        Note:
+            - The method handles three main intents: "weather", "train", and "logement". If the intent is "other" or if classification fails, it generates a generic response.
+            - For "weather", it calls the weather function and formats the response.
+            - For "train", it calls the search_trains function and formats the response.
+            - For "logement", it manages a multi-turn conversation to gather necessary information before calling the Houssing class to search for hotels, then formats the response.
+
+        
+        """
 
         if channel_id not in self.contexts:
             self.contexts[channel_id] = list(self.system_prompt)
